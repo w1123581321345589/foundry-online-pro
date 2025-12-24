@@ -1,0 +1,6 @@
+{
+  "name": "@foundry/sdk",
+  "private": true,
+  "version": "0.0.1",
+  "main": "src/index.ts"
+}

@@ -1,0 +1,224 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  operator
+  teacher
+  parent
+}
+enum EnrollmentStatus {
+  applied
+  offered
+  deposited
+  enrolled
+  cancelled
+}
+enum QAStatus {
+  queued
+  approved
+  rejected
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Parent    Parent?
+}
+
+model Organization {
+  onboardingStatus String?
+  onboardingCompletedAt DateTime?
+
+  stripeAccountId String?
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  billingEmail String?
+
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  orgId       String
+  title       String
+  description String?
+  gradeBand   String?
+  createdAt   DateTime @default(now())
+}
+
+model Cohort {
+  id        String   @id @default(cuid())
+  courseId  String
+  title     String
+  timezone  String
+  meetsPerWeek Int    @default(2)
+  createdAt DateTime @default(now())
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  cohortId    String
+  startsAt    DateTime
+  durationMin Int
+  recordingUrl String?
+  createdAt   DateTime @default(now())
+}
+
+model Household {
+  id        String   @id @default(cuid())
+  name      String?
+  createdAt DateTime @default(now())
+  Learners  Learner[]
+  Parents   Parent[]
+}
+
+model Parent {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  householdId String
+  createdAt   DateTime @default(now())
+}
+
+model Learner {
+  id          String   @id @default(cuid())
+  householdId String
+  firstName   String
+  lastName    String
+  dob         DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  cohortId  String
+  learnerId String
+  status    EnrollmentStatus @default(applied)
+  createdAt DateTime @default(now())
+}
+
+model RecordingConsent {
+  id        String   @id @default(cuid())
+  learnerId String
+  courseId  String
+  consent   Boolean
+  createdAt DateTime @default(now())
+}
+
+model OnlineIncident {
+  id         String   @id @default(cuid())
+  orgId      String
+  reporterId String
+  type       String
+  notes      String?
+  createdAt  DateTime @default(now())
+}
+
+model LessonPack {
+  id          String   @id @default(cuid())
+  orgId       String
+  unitRef     String
+  status      String   @default("queued")
+  rubricScore Float?
+  linksJson   String   @default("{}")
+  createdAt   DateTime @default(now())
+}
+
+model QATicket {
+  id          String   @id @default(cuid())
+  lessonPackId String
+  status      QAStatus @default(queued)
+  reviewerId  String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PaymentPlan {
+  id           String   @id @default(cuid())
+  orgId        String
+  title        String
+  amountMonthly Int
+  stripePriceId String?
+  createdAt    DateTime @default(now())
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  orgId         String
+  householdId   String
+  amountCents   Int
+  status        String   @default("open")
+  stripeInvoiceId String?
+  createdAt     DateTime @default(now())
+}
+
+model Transaction {
+  id             String   @id @default(cuid())
+  invoiceId      String
+  amountCents    Int
+  stripePaymentId String?
+  status         String   @default("succeeded")
+  createdAt      DateTime @default(now())
+}
+
+model ESAClaim {
+  id          String   @id @default(cuid())
+  orgId       String
+  householdId String
+  state       String
+  amountCents Int
+  status      String   @default("submitted")
+  evidenceUrl String?
+  createdAt   DateTime @default(now())
+}
+
+
+model Attendance {
+  id        String   @id @default(cuid())
+  sessionId String
+  learnerId String
+  status    String   @default("present") // present|late|absent
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model RecordingAsset {
+  id        String   @id @default(cuid())
+  sessionId String
+  url       String
+  createdAt DateTime @default(now())
+}
+
+model RecapReport {
+  id          String   @id @default(cuid())
+  householdId String
+  weekOf      DateTime
+  url         String?  // PDF location
+  summary     String?
+  createdAt   DateTime @default(now())
+}
+
+model SessionSettings {
+  id          String   @id @default(cuid())
+  sessionId   String   @unique
+  chatEnabled Boolean  @default(false)
+  recording   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
